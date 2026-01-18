@@ -14,8 +14,8 @@ function mime.get(ext)
    return "application/octet-stream"
 end
 
-function mime.guess()
-   return mimetypes.guess() or "application/octet-stream"
+function mime.guess(filename)
+   return mimetypes.guess(filename) or "application/octet-stream"
 end
 
 return mime

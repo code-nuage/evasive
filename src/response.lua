@@ -51,8 +51,8 @@ function response:get_body()
    return self.body or ""
 end
 
-function response:get_not_found_fallback(req, res)
-   self.route_not_found(req, res)
+function response:get_not_found_fallback()
+   return self.route_not_found
 end
 
 -- Build
