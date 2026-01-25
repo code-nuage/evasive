@@ -4,7 +4,7 @@ local router = require("evasive.router")
 local mime = require("evasive.mime")
 local colors = require("evasive.colors")
 
-router:new(require("options"))
+local app = router:new(require("options"))
 :add_middleware(function(req, res, next)
    local start = os.clock()
 
@@ -27,6 +27,12 @@ end)
       return
    end
    next()
+end)
+:set_route_not_found(function(req, res)
+   res
+   :set_code(404)
+   :set_header("Content-Type", mime.get("json"))
+   :set_body(json.encode({message = "Can't find " .. req:get_path() .. " with " .. req:get_method()}))
 end)
 :add_route("GET", "/", function(req, res)
    res
@@ -53,4 +59,9 @@ end)
    :set_header("Content-Type", mime.get("json"))
    :set_body(json.encode({message = "Welcome at admin dashboard"}))
 end)
-:start()
+:add_route("GET", "/not_found", function(req, res)
+   res:not_found(req) -- Should NOT set a 200 code and fallback to router's route not found
+   return
+end)
+
+app:start()

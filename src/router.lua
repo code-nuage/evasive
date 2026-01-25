@@ -147,6 +147,7 @@ function router:start()
          end
 
          ok, _ = xpcall(function()
+            res:set_not_found_fallback(self:get_route_not_found())
             self:execute_middlewares(req, res, function()
                r:execute(req, res)
             end)

@@ -1,5 +1,7 @@
 local headers = require("http.headers")
 
+local mime    = require("evasive.mime")
+
 local response = {}
 response.__index = response
 
@@ -53,6 +55,21 @@ end
 
 function response:get_not_found_fallback()
    return self.route_not_found
+end
+
+-- Logic
+function response:not_found(req)
+   local not_found_fallback = self:get_not_found_fallback()
+
+   if not not_found_fallback then
+      self
+      :set_code(404)
+      :set_header("Content-Type", mime.get("txt"))
+      :set_body("No ressource found at " .. req:get_path())
+      return
+   end
+
+   not_found_fallback:execute(req, self)
 end
 
 -- Build
