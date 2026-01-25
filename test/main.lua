@@ -34,7 +34,14 @@ end)
    :set_header("Content-Type", mime.get("json"))
    :set_body(json.encode({message = "Welcome home"}))
 end)
-:add_route("GET", "/app/", function(req, res)
+:add_route("GET", "/app", function(req, res)
+   res
+   :set_code(200)
+   :set_header("Content-Type", mime.get("json"))
+   :set_body(json.encode({message = "Welcome at /app"}))
+end)
+:add_route("GET", "/err", function(req, res) -- Should throw an error
+   missing_value()
    res
    :set_code(200)
    :set_header("Content-Type", mime.get("json"))

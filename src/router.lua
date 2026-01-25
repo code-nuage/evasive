@@ -132,7 +132,7 @@ function router:start()
       host = self:get_host(),
       port = self:get_port(),
       onstream = function(_, stream)
-         local ok, err
+         local ok
          local req_headers = stream:get_headers()
          local req_body = stream:get_body_as_string()
 
@@ -146,27 +146,29 @@ function router:start()
             end
          end
 
-         ok, err = pcall(function()
+         ok, _ = xpcall(function()
             self:execute_middlewares(req, res, function()
                r:execute(req, res)
             end)
+         end, function(err)
+            print(debug.traceback(err, 2))
          end)
 
          if not ok then
-            print(err)
             res
             :set_code(500)
             :set_body("Internal server error")
          end
 
-         ok, err = pcall(function()
+         ok, _ = xpcall(function()
             local res_headers, res_body = res:build()
             stream:write_headers(res_headers, false)
             stream:write_chunk(res_body, true)
+         end, function(err)
+            print(debug.traceback(err, 2))
          end)
 
          if not ok then
-            print(err)
             res
             :set_code(500)
             :set_header("Content-Type", mime.get("text"))
