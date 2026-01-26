@@ -5,7 +5,7 @@ local mime = require("evasive.mime")
 local colors = require("evasive.colors")
 
 local app = router:new(require("options"))
-:add_middleware(function(req, res, next)
+app:add_middleware(function(req, res, next)
    local start = os.clock()
 
    next()
@@ -27,6 +27,12 @@ end)
       return
    end
    next()
+end)
+:set_server_error_handler(function(req, res)
+   res
+   :set_code(500)
+   :set_header("Content-Type", mime.get("json"))
+   :set_body(json.encode({message = "Watch out! Internal server error."}))
 end)
 :set_route_not_found(function(req, res)
    res
@@ -60,6 +66,9 @@ end)
    :set_body(json.encode({message = "Welcome at admin dashboard"}))
 end)
 :add_route("GET", "/not_found", function(req, res)
+   app:execute_not_found(req, res) -- Should NOT set a 200 code and fallback to router's route not found
+end)
+:add_route("GET", "/user/:id", function(req, res)
    res:not_found(req) -- Should NOT set a 200 code and fallback to router's route not found
    return
    res
