@@ -22,7 +22,10 @@ local record response
    get_body:               function(response):                 types.body
    get_not_found_fallback: function(response):                 callback
 
+   not_found:              function(response, request)
+
    build:                  function():                         (table, string) -- table: lua-http headers, string: lua-http body 
 end
 
 return response
+
