@@ -21,26 +21,28 @@ local record router
 
    new: function(self, ? options): router
 
-   set_host:               function(self, types.host): router
-   set_port:               function(self, types.port): router
-   add_route:              function(
+   set_host:                function(self, types.host): router
+   set_port:                function(self, types.port): router
+   add_route:               function(
       self, types.method, types.path, callback):       router
-   set_route_not_found:    function(self, callback):   router
-   set_route_server_error: function(self, callback):   router
-   add_middleware:         function(self, middleware): router
+   set_route_not_found:      function(self, callback):   router
+   set_server_error_handler: function(self, callback):   router
+   add_middleware:           function(self, middleware): router
 
-   get_host:               function(self):             types.host
-   get_port:               function(self):             types.port
-   get_routes:             function(self):             {route}
-   get_route:              function(
-      self, types.method, types.path):                 route
-   get_route_not_found:    function(self):             route
-   get_route_server_error: function(self):             route
-   get_middlewares:        function(self):             {middleware}
-   get_middleware:         function(self, integer):    middleware
+   get_host:                 function(self):             types.host
+   get_port:                 function(self):             types.port
+   get_routes:               function(self):             {route}
+   get_route:                function(
+      self, types.method, types.path):                   route
+   get_route_not_found:      function(self):             route
+   get_server_error_handler: function(self):             route
+   get_middlewares:          function(self):             {middleware}
+   get_middleware:           function(self, integer):    middleware
 
-   execute_middlewares: function(
+   execute_middlewares:      function(
       self, request, response, route)
+   execute_not_found:        function(
+      self, request, response)
    start: function(self)
 end
 

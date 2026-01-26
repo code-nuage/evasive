@@ -34,7 +34,7 @@ function router:new(options)
       :set_header("Content-Type", "text/plain")
       :set_body("No ressource found at " .. req:get_path())
    end)
-   :set_route_server_error(function(_, res)
+   :set_server_error_handler(function(_, res)
       res
       :set_code(500)
       :set_header("Content-Type", mime.get("text"))
@@ -74,14 +74,14 @@ function router:set_route_not_found(callback)
    return self
 end
 
-function router:set_route_server_error(callback)
-   self.route_server_error = route:new(nil, nil, callback)
+function router:set_server_error_handler(callback)
+   self.server_error_handler = callback
    return self
 end
 
 function router:add_middleware(callback)
    assert(type(callback) == "function",
-      "Argument <callback>: Must be a string")
+      "Argument <callback>: Must be a function")
    table.insert(self.middlewares, callback)
    return self
 end
@@ -109,12 +109,12 @@ function router:get_route(method, path)
    return self:get_route_not_found()
 end
 
-function router:get_route_not_found()
+function router:get_route_not_found() -- Not found is a route
    return self.route_not_found
 end
 
-function router:get_route_server_error()
-   return self.route_server_error
+function router:get_server_error_handler() -- While error is a handler (a callback)
+   return self.server_error_handler
 end
 
 function router:get_middlewares()
@@ -130,9 +130,9 @@ function router:execute_middlewares(req, res, final)
    local i = 0
 
    local function next()
-      i = i + 1
-      local mw = self:get_middleware(i)
-      xpcall(function()
+      local ok, _ = xpcall(function()
+         i = i + 1
+         local mw = self:get_middleware(i)
          if mw then
             mw(req, res, next)
          else
@@ -140,11 +140,18 @@ function router:execute_middlewares(req, res, final)
          end
       end, function(err)
          print(debug.traceback(err, 2))
-         self:get_route_server_error():get_callback()(req, res)
       end)
+
+      if not ok then
+         self:get_server_error_handler()(req, res)
+      end
    end
 
    next()
+end
+
+function router:execute_not_found(req, res)
+   self:get_route_not_found():execute(req, res)
 end
 
 function router:start()
@@ -152,32 +159,41 @@ function router:start()
       host = self:get_host(),
       port = self:get_port(),
       onstream = function(_, stream)
-         local ok
-         local req_headers = stream:get_headers()
-         local req_body = stream:get_body_as_string()
+         local req, res
+         local ok, _ = xpcall(function()
+            local req_headers = stream:get_headers()
+            local req_body = stream:get_body_as_string()
 
-         local req = request.new(req_headers, req_body)
-         local res = response.new()
+            req = request.new(req_headers, req_body)
+            res = response.new()
 
-         local r, params = self:get_route(req:get_method(), req:get_path())
-         if params then
-            for k, v in pairs(params) do
-               req:set_param(k, v)
+            local r, params = self:get_route(
+               req:get_method(),
+               req:get_path()
+            )
+
+            if params then
+               for k, v in pairs(params) do
+                  req:set_param(k, v)
+               end
             end
-         end
 
-         res:set_not_found_fallback(self:get_route_not_found())
-         self:execute_middlewares(req, res, function()
-            r:execute(req, res)
-         end)
-
-         xpcall(function()
-            local res_headers, res_body = res:build()
-            stream:write_headers(res_headers, false)
-            stream:write_chunk(res_body, true)
+            self:execute_middlewares(req, res, function()
+               r:execute(req, res)
+            end)
          end, function(err)
             print(debug.traceback(err, 2))
-            self:get_route_server_error():execute(req, res)
+         end)
+
+         if not ok then
+            res:reset()
+            self:get_server_error_handler()(req, res)
+         end
+
+         local _ = pcall(function()
+            local headers, body = res:build()
+            stream:write_headers(headers, false)
+            stream:write_chunk(body, true)
          end)
       end
    }
