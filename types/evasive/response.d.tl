@@ -16,11 +16,13 @@ local record response
    set_header:             function(response, string, string): response
    set_body:               function(response, types.body):     response
    set_not_found_fallback: function(response, callback):       response
+   set_state:              function(response, boolean):        response
 
    get_code:               function(response):                 types.code
    get_headers:            function(response):                 types.headers
    get_body:               function(response):                 types.body
    get_not_found_fallback: function(response):                 callback
+   get_state:              function(response):                 boolean
 
    build:                  function():                         (table, string) -- table: lua-http headers, string: lua-http body 
 end

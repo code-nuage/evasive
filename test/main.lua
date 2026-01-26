@@ -62,6 +62,10 @@ end)
 :add_route("GET", "/not_found", function(req, res)
    res:not_found(req) -- Should NOT set a 200 code and fallback to router's route not found
    return
+   res
+   :set_code(200)
+   :set_header("Content-Type", mime.get("json"))
+   :set_body(json.encode({message = "Welcome at /not_found"}))
 end)
 
 app:start()

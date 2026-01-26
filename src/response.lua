@@ -9,6 +9,7 @@ function response.new()
    local i = setmetatable({}, response)
 
    i.headers = {}
+   i.state = true
 
    return i
 end
@@ -17,26 +18,39 @@ end
 function response:set_code(code)
    assert(type(code) == "number",
       "Argument <code>: Must be a number.")
-   self.code = code
+   if self:get_state() then
+      self.code = code
+   end
    return self
 end
 
 function response:set_header(key, value)
    assert(type(key) == "string" and type(value) == "string",
       "Argument <key> & <value>: Must be strings.")
-   self.headers[key] = value
+   if self:get_state() then
+      self.headers[key] = value
+   end
    return self
 end
 
 function response:set_body(body)
    assert(type(body) == "string",
       "Argument <body>: Must be a string.")
-   self.body = body
+   if self:get_state() then
+      self.body = body
+   end
    return self
 end
 
-function response:set_not_found_fallback(callback)
-   self.route_not_found = callback
+function response:set_not_found_fallback(route)
+   self.route_not_found = route
+   return self
+end
+
+function response:set_state(state)
+   assert(type(state) == "boolean",
+      "Argument <state>: Must be a boolean.")
+   self.state = state
    return self
 end
 
@@ -57,6 +71,10 @@ function response:get_not_found_fallback()
    return self.route_not_found
 end
 
+function response:get_state()
+   return self.state
+end
+
 -- Logic
 function response:not_found(req)
    local not_found_fallback = self:get_not_found_fallback()
@@ -70,6 +88,7 @@ function response:not_found(req)
    end
 
    not_found_fallback:execute(req, self)
+   self:set_state(false)
 end
 
 -- Build

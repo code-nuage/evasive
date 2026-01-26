@@ -34,6 +34,12 @@ function router:new(options)
       :set_header("Content-Type", "text/plain")
       :set_body("No ressource found at " .. req:get_path())
    end)
+   :set_route_server_error(function(_, res)
+      res
+      :set_code(500)
+      :set_header("Content-Type", mime.get("text"))
+      :set_body("Internal server error")
+   end)
 
    return self
 end
@@ -65,6 +71,11 @@ end
 
 function router:set_route_not_found(callback)
    self.route_not_found = route:new(nil, nil, callback)
+   return self
+end
+
+function router:set_route_server_error(callback)
+   self.route_server_error = route:new(nil, nil, callback)
    return self
 end
 
@@ -102,6 +113,10 @@ function router:get_route_not_found()
    return self.route_not_found
 end
 
+function router:get_route_server_error()
+   return self.route_server_error
+end
+
 function router:get_middlewares()
    return self.middlewares
 end
@@ -117,11 +132,16 @@ function router:execute_middlewares(req, res, final)
    local function next()
       i = i + 1
       local mw = self:get_middleware(i)
-      if mw then
-         mw(req, res, next)
-      else
-         final()
-      end
+      xpcall(function()
+         if mw then
+            mw(req, res, next)
+         else
+            final()
+         end
+      end, function(err)
+         print(debug.traceback(err, 2))
+         self:get_route_server_error():get_callback()(req, res)
+      end)
    end
 
    next()
@@ -146,35 +166,19 @@ function router:start()
             end
          end
 
-         ok, _ = xpcall(function()
-            res:set_not_found_fallback(self:get_route_not_found())
-            self:execute_middlewares(req, res, function()
-               r:execute(req, res)
-            end)
-         end, function(err)
-            print(debug.traceback(err, 2))
+         res:set_not_found_fallback(self:get_route_not_found())
+         self:execute_middlewares(req, res, function()
+            r:execute(req, res)
          end)
 
-         if not ok then
-            res
-            :set_code(500)
-            :set_body("Internal server error")
-         end
-
-         ok, _ = xpcall(function()
+         xpcall(function()
             local res_headers, res_body = res:build()
             stream:write_headers(res_headers, false)
             stream:write_chunk(res_body, true)
          end, function(err)
             print(debug.traceback(err, 2))
+            self:get_route_server_error():execute(req, res)
          end)
-
-         if not ok then
-            res
-            :set_code(500)
-            :set_header("Content-Type", mime.get("text"))
-            :set_body("Internal server error")
-         end
       end
    }
    app:loop()
