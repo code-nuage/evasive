@@ -35,7 +35,7 @@ local record router
    get_route:                function(
       self, types.method, types.path):                   route
    get_route_not_found:      function(self):             route
-   get_server_error_handler: function(self):             route
+   get_server_error_handler: function(self):             callback
    get_middlewares:          function(self):             {middleware}
    get_middleware:           function(self, integer):    middleware
 
