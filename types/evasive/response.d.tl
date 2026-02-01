@@ -2,8 +2,6 @@ local type types = require("evasive.types")
 
 local type request = require("evasive.request")
 
-local type callback = function(request, response)
-
 local record response
    code:            types.code
    headers:         types.headers
