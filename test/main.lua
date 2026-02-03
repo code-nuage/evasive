@@ -40,18 +40,21 @@ end)
    :set_header("Content-Type", mime.get("json"))
    :set_body(json.encode({message = "Can't find " .. req:get_path() .. " with " .. req:get_method()}))
 end)
+-- curl http://localhost:8080/
 :add_route("GET", "/", function(req, res)
    res
    :set_code(200)
    :set_header("Content-Type", mime.get("json"))
    :set_body(json.encode({message = "Welcome home"}))
 end)
+-- curl http://localhost:8080/app
 :add_route("GET", "/app", function(req, res)
    res
    :set_code(200)
    :set_header("Content-Type", mime.get("json"))
    :set_body(json.encode({message = "Welcome at /app"}))
 end)
+-- curl http://localhost:8080/err
 :add_route("GET", "/err", function(req, res) -- Should throw an error
    missing_value()
    res
@@ -59,22 +62,35 @@ end)
    :set_header("Content-Type", mime.get("json"))
    :set_body(json.encode({message = "Welcome at /app"}))
 end)
+-- curl http://localhost:8080/admin/dashboard
 :add_route("GET", "/admin/dashboard", function(req, res)
    res
    :set_code(200)
    :set_header("Content-Type", mime.get("json"))
    :set_body(json.encode({message = "Welcome at admin dashboard"}))
 end)
+-- curl http://localhost:8080/not_found
 :add_route("GET", "/not_found", function(req, res)
    app:execute_not_found(req, res) -- Should NOT set a 200 code and fallback to router's route not found
 end)
+-- curl http://localhost:8080/user/1
 :add_route("GET", "/user/:id", function(req, res)
-   res:not_found(req) -- Should NOT set a 200 code and fallback to router's route not found
-   return
    res
    :set_code(200)
    :set_header("Content-Type", mime.get("json"))
-   :set_body(json.encode({message = "Welcome at /not_found"}))
+   :set_body(json.encode({message = "Get user with id " .. req:get_param("id")}))
+end)
+-- curl http://localhost:8080/page?page=1
+:add_route("GET", "/page", function(req, res)
+   local page = req:get_query_param("page")
+   res
+   :set_code(200)
+   :set_header("Content-Type", mime.get("json"))
+   if page then
+      res:set_body(json.encode({message = "Your reading page " .. page}))
+   else
+      app:execute_not_found(req, res)
+   end
 end)
 
 app:start()
