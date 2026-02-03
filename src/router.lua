@@ -106,7 +106,7 @@ function router:get_route(method, path)
          return r, params
       end
    end
-   return self:get_route_not_found()
+   return self:get_route_not_found(), nil
 end
 
 function router:get_route_not_found() -- Not found is a route
