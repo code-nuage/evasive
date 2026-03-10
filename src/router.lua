@@ -1,9 +1,11 @@
 local server = require("http.server")
 
-local route = require("evasive.route")
-local request = require("evasive.request")
-local response = require("evasive.response")
-local mime   = require("evasive.mime")
+local route     = require("evasive.route")
+local request   = require("evasive.request")
+local response  = require("evasive.response")
+local verbosity = require("evasive.verbosity")
+local mime      = require("evasive.mime")
+local log       = require("evasive.log")
 
 local router = {}
 
@@ -23,6 +25,9 @@ function router:new(options)
       end
       if type(options.port) == "number" then
          self:set_port(options.port)
+      end
+      if options.verbosity == true then
+         self:set_verbosity(true)
       end
    end
 
@@ -56,6 +61,13 @@ function router:set_port(port)
    assert(type(port) == "number",
       "Argument <port>: Must be a number.")
    self.port = port
+   return self
+end
+
+function router:set_verbosity(verbosity)
+   assert(type(verbosity) == "boolean",
+      "Argument <verbosity>: Must be a number.")
+   self.verbosity = verbosity
    return self
 end
 
@@ -93,6 +105,10 @@ end
 
 function router:get_port()
    return (self.port and type(self.port) == "number") and self.port or 0
+end
+
+function router:get_verbosity()
+   return (self.verbosity and type(self.verbosity) == "boolean") and self.verbosity or false
 end
 
 function router:get_routes()
@@ -139,7 +155,7 @@ function router:execute_middlewares(req, res, final)
             final()
          end
       end, function(err)
-         print(debug.traceback(err, 2))
+         log(3, debug.traceback(err, 2))
       end)
 
       if not ok then
@@ -182,7 +198,7 @@ function router:start()
                r:execute(req, res)
             end)
          end, function(err)
-            print(debug.traceback(err, 2))
+            log(3, debug.traceback(err, 2))
          end)
 
          if not ok then
@@ -197,6 +213,11 @@ function router:start()
          end)
       end
    }
+   if self:get_verbosity() then
+      log(1, "--+ %{cyan}Started server at " .. self:get_host() ":" .. self:get_port() .. "%{reset} +--")
+
+      app:add_middleware(verbosity)
+   end
    app:loop()
 end
 
