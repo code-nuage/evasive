@@ -1,8 +1,8 @@
 package = "evasive"
-version = "0.1-6"
+version = "0.1-7"
 source = {
    url = "git+https://www.github.com/code-nuage/evasive",
-   tag = "0.1-6"
+   tag = "0.1-7"
 }
 description = {
    homepage = "https://www.github.com/code-nuage/evasive",
