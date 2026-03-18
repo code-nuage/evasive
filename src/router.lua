@@ -214,9 +214,9 @@ function router:start()
       end
    }
    if self:get_verbosity() then
-      log(1, "--+ %{cyan}Started server at " .. self:get_host() ":" .. self:get_port() .. "%{reset} +--")
+      log(1, "--+ %{cyan}Started server at " .. self:get_host() .. ":" .. self:get_port() .. "%{reset} +--")
 
-      app:add_middleware(verbosity)
+      self:add_middleware(verbosity)
    end
    app:loop()
 end
