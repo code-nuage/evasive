@@ -5,19 +5,6 @@ local mime = require("evasive.mime")
 local colors = require("evasive.colors")
 
 local app = router:new(require("options"))
-app:add_middleware(function(req, res, next)
-   local start = os.clock()
-
-   next()
-
-   print(string.format(
-      "%s %s %s %s",
-      colors.colorize_method(req:get_method(), " " .. req:get_method() .. " "),
-      colors.colorize("%{bright blue}" .. req:get_path()),
-      colors.colorize_code(res:get_code()),
-      string.format("%.2fms", (os.clock() - start) * 1000)
-   ))
-end)
 :add_middleware(function(req, res, next)
    if string.match(req:get_path(), "^/admin") then
       res
